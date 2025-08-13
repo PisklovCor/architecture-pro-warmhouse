@@ -13,7 +13,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-#      - ./smart_home/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - ./smart_home:/docker-entrypoint-initdb.d  # Автоматическое выполнение скриптов
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
@@ -56,9 +55,36 @@ services:
         condition: service_started
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/smarthome
-      - TEMPERATURE_API_URL=http://temperature-api:8081
+      - TEMPERATURE_API_URL=http://telemetry:8091
     ports:
       - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - smarthome-network
+
+  device-management:
+    build:
+      context: ./device-management
+      dockerfile: Dockerfile
+    container_name: device-management
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+    networks:
+      - smarthome-network
+
+  telemetry:
+    build:
+      context: ./telemetry
+      dockerfile: Dockerfile
+    container_name: telemetry
+    depends_on:
+      temperature-api:
+        condition: service_started
+    environment:
+      - TEMPERATURE_API_BASE-URL=http://temperature-api:8081
+    ports:
+      - "8091:8091"
     restart: unless-stopped
     networks:
       - smarthome-network

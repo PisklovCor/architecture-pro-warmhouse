@@ -1,0 +1,94 @@
+package org.example.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.example.dto.ErrorResponse;
+import org.example.dto.TemperatureDto;
+import org.example.service.TemperatureService;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/v1")
+@RequiredArgsConstructor
+@Tag(name = "Telemetry", description = "Эндпоинты чтения телеметрии температуры")
+public class TemperatureController {
+
+    private final TemperatureService service;
+
+    @Operation(summary = "Количество записей телеметрии")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успешно",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Long.class)))
+    })
+    @GetMapping("/count")
+    public long count() {
+        return service.count();
+    }
+
+    @Operation(summary = "Получить телеметрию по локации")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успешно",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)),
+            @ApiResponse(responseCode = "400", description = "Неверные параметры",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Не найдено",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/temperature")
+    public TemperatureDto getTemperature(
+            @Parameter(description = "Локация датчика", required = true)
+            @RequestParam(required = true) String location) {
+
+        log.info("Запрос получения телеметрии по location={}",location);
+        var dto = service.getFirstByLocation(location);
+        log.info("Телеметрия по location={}",dto);
+        return dto;
+    }
+
+    @Operation(summary = "Получить телеметрию по sensorId")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успешно",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)),
+            @ApiResponse(responseCode = "400", description = "Неверные параметры",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Не найдено",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/temperature/{sensorId}")
+    public TemperatureDto getTemperatureBySensorId(
+            @Parameter(description = "Идентификатор датчика", required = true)
+            @PathVariable String sensorId) {
+
+        log.info("Запрос получения телеметрии по sensorId={}",sensorId);
+        var dto = service.getFirstBySensorId(sensorId);
+        log.info("Телеметрия по sensorId={}",dto);
+        return dto;
+    }
+
+    @Operation(summary = "Получить все записи телеметрии", description = "Возвращает список всех измерений температуры, отсортированный по времени убыванию")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успешно",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = TemperatureDto.class)))
+    })
+    @GetMapping("/temperatures")
+    public List<TemperatureDto> getAll() {
+        return service.getAll();
+    }
+}
