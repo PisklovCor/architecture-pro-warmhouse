@@ -154,6 +154,5 @@ Message Broker (RabbitMQ) - для асинхронного взаимодейс
 
 Осуществляется путем переопределения имени контейнера и порта в docker-compose-microservices.yml
 Сервис **Telemetry** поддерживает эндпоинты для монолита
-
-Монолитное решение: TEMPERATURE_API_URL=http://temperature-api:8081
-Микросервисное решение: TEMPERATURE_API_URL=http://telemetry:8091
+- Монолитное решение: TEMPERATURE_API_URL=http://temperature-api:8081
+- Микросервисное решение: TEMPERATURE_API_URL=http://telemetry:8091
